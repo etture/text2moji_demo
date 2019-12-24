@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { inject, observer } from 'mobx-react';
 import axios from 'axios';
 
 import { IPredictionStore } from '../stores/PredictionStore';
 import { EmojiProbPair } from '../definitions/EmojiPredictions';
 
-interface IText2MojiProps extends RouteComponentProps<{}> {
+interface IText2MojiProps {
     predictionStore?: IPredictionStore
 }
 interface IText2MojiState { }
@@ -28,7 +27,7 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
             const formProps = {
                 'sentence': this.props.predictionStore!.queryString
             };
-            axios.defaults.headers.common['Content-Type'] = 'application/json'
+            axios.defaults.headers.common['Content-Type'] = 'application/json';
             const response = await axios.post(`http://localhost:8123/hello`, formProps);
             this.props.predictionStore!.setPredictions(response.data);
         } catch (error) {
@@ -40,14 +39,12 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
         let resultList: Array<JSX.Element> = [];
         if (this.props.predictionStore!.initialized) {
             const preds = this.props.predictionStore!.predictions;
-            const predsList: Array<EmojiProbPair> = [preds.first!, preds.second!, preds.third!, preds.fourth!, preds.fifth!];
+            const predsList: Array<EmojiProbPair> = 
+                    [preds.first!, preds.second!, preds.third!, preds.fourth!, preds.fifth!];
             predsList.forEach(item => {
-                const hexStr = String.raw`{${item.hexcode}}`;
-                const hex = '\\u' + `{${item.hexcode}}`;
-                // const utf = convert.hexToUtf8(hex);
                 const emojiStr = String.fromCodePoint(parseInt(item.hexcode, 16));
                 resultList.push(
-                    <li key={item.hexcode} className="list-group-item">
+                    <li key={item.hexcode + item.probability} className="list-group-item">
                         <div className="container">
                             <h3>{`${emojiStr}`}</h3>
                             <h3>{`${item.probability}`}</h3>
@@ -89,4 +86,4 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
     }
 }
 
-export default withRouter(Text2Moji);
+export default Text2Moji;
