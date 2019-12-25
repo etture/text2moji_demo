@@ -108,10 +108,10 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
                     resultList.push(
                         <tr key={emojiStr}>
                             <td>
-                                <div className="container">
-                                    <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
-                                    <h3 style={{ float: "right" }}>{`${item.probability * 100}%`}</h3>
-                                </div>
+                                <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
+                            </td>
+                            <td>
+                                <h3>{`${item.probability * 100}%`}</h3>
                             </td>
                         </tr>
                     );
@@ -146,11 +146,11 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
                     <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => this.handleSubmit(e)}>
                         <h3>문장을 입력하세요.</h3>
                         <div className="form-group">
-                            <label className="label">문장</label>
                             <input
                                 className="form-control"
                                 type="text"
                                 name="query"
+                                placeholder="문장 -> 이모지"
                                 value={this.props.predictionStore!.queryString}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => this.handleQuery(e)}
                             />
@@ -163,7 +163,8 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
                 </div>
                 <div className="container card" style={{
                     display: this.getDisplayStyle("results"),
-                    marginTop: "20pt"
+                    marginTop: "20pt",
+                    padding: "20pt 10pt"
                 }}>
                     <h3>결과</h3>
                     <table className="table table-sm table-borderless col-6">
