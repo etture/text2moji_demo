@@ -20,7 +20,8 @@ interface IText2MojiProps {
     predictionStore?: IPredictionStore
 }
 interface IText2MojiState {
-    loading: boolean
+    loading: boolean,
+    width: number
 }
 
 @inject('predictionStore')
@@ -29,9 +30,24 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
     constructor(props: IText2MojiProps) {
         super(props);
         this.state = {
-            loading: false
+            loading: false,
+            width: window.innerWidth
         };
     }
+
+    componentWillMount() {
+        window.addEventListener('resize', this.handleWindowSizeChange);
+    }
+
+    // make sure to remove the listener
+    // when the component is not mounted anymore
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.handleWindowSizeChange);
+    }
+
+    handleWindowSizeChange = () => {
+        this.setState({ width: window.innerWidth });
+    };
 
     handleQuery = (e: React.ChangeEvent<HTMLInputElement>): void => {
         this.props.predictionStore!.setQueryString(e.target.value);
@@ -75,23 +91,50 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
         }
     }
 
-    emojiResult = (): JSX.Element[] => {
+    emojiResult = (): JSX.Element[] | JSX.Element => {
         let resultList: Array<JSX.Element> = [];
         if (this.props.predictionStore!.show) {
+            // To adjust table shape depending on desktop or mobile
+            const { width } = this.state;
+            const isMobile = width <= 500;
+
             const preds = this.props.predictionStore!.predictions;
             const predsList: Array<EmojiProbPair> =
                 [preds.first!, preds.second!, preds.third!, preds.fourth!, preds.fifth!];
-            predsList.forEach(item => {
-                const emojiStr = String.fromCodePoint(parseInt(item.hexcode, 16));
-                resultList.push(
-                    <td>
-                        <div className="container">
-                            <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
-                            <h3>{`${item.probability * 100}%`}</h3>
-                        </div>
-                    </td>
-                )
-            });
+
+            if (isMobile) {
+                predsList.forEach(item => {
+                    const emojiStr = String.fromCodePoint(parseInt(item.hexcode, 16));
+                    resultList.push(
+                        <tr key={emojiStr}>
+                            <td>
+                                <div className="container">
+                                    <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
+                                    <h3 style={{ float: "right" }}>{`${item.probability * 100}%`}</h3>
+                                </div>
+                            </td>
+                        </tr>
+                    );
+                });
+                return resultList;
+            } else {
+                predsList.forEach(item => {
+                    const emojiStr = String.fromCodePoint(parseInt(item.hexcode, 16));
+                    resultList.push(
+                        <td key={emojiStr}>
+                            <div className="container">
+                                <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
+                                <h3>{`${item.probability * 100}%`}</h3>
+                            </div>
+                        </td>
+                    );
+                });
+                return (
+                    <tr>
+                        {resultList}
+                    </tr>
+                );
+            }
         }
         return resultList;
     }
@@ -125,9 +168,7 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
                     <h3>결과</h3>
                     <table className="table table-sm table-borderless col-6">
                         <tbody>
-                            <tr>
-                                {this.emojiResult()}
-                            </tr>
+                            {this.emojiResult()}
                         </tbody>
                     </table>
                 </div>
