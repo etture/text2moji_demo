@@ -4,9 +4,10 @@ import { EmojiPredictions, EmojiProbPair } from '../definitions/EmojiPredictions
 export interface IPredictionStore {
     queryString: string,
     predictions: EmojiPredictions,
-    initialized: boolean,
+    show: boolean,
     setQueryString(qStr: string): void,
-    setPredictions(preds: EmojiPredictions): void
+    setPredictions(preds: EmojiPredictions): void,
+    setShowOff(): void
 }
 
 class Predictions implements EmojiPredictions {
@@ -32,7 +33,7 @@ class Predictions implements EmojiPredictions {
 export class PredictionStore implements IPredictionStore {
     @observable queryString = "";
     @observable predictions = new Predictions();
-    @observable initialized = false;
+    @observable show = false;
 
     @action
     setQueryString(qStr: string) {
@@ -41,8 +42,13 @@ export class PredictionStore implements IPredictionStore {
 
     @action
     setPredictions(preds: EmojiPredictions) {
-        this.initialized = true;
+        this.show = true;
         this.predictions.setProbabilities(preds);
         console.log(this.predictions)
+    }
+
+    @action
+    setShowOff() {
+        this.show = false;
     }
 }

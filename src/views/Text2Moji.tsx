@@ -1,20 +1,36 @@
 import React, { Component } from 'react';
 import { inject, observer } from 'mobx-react';
 import axios from 'axios';
+import https from 'https';
 
 import { IPredictionStore } from '../stores/PredictionStore';
 import { EmojiProbPair } from '../definitions/EmojiPredictions';
+import { sleep } from '../utils/sleep';
+import { protocol, domain, port, endpoint } from '../global/variables';
+
+import Loader from 'react-loader-spinner';
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
+
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+const agent = new https.Agent({
+    rejectUnauthorized: false
+});
 
 interface IText2MojiProps {
     predictionStore?: IPredictionStore
 }
-interface IText2MojiState { }
+interface IText2MojiState {
+    loading: boolean
+}
 
 @inject('predictionStore')
 @observer
 class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
     constructor(props: IText2MojiProps) {
         super(props);
+        this.state = {
+            loading: false
+        };
     }
 
     handleQuery = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -25,31 +41,55 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
         e.preventDefault();
         try {
             const formProps = {
-                'sentence': this.props.predictionStore!.queryString
+                'sentence': this.props.predictionStore!.queryString,
+                httpsAgent: agent
             };
-            axios.defaults.headers.common['Content-Type'] = 'application/json';
-            const response = await axios.post(`http://localhost:8123/hello`, formProps);
+            this.setState({ loading: true });
+            this.props.predictionStore!.setShowOff();
+            await sleep(400); // To show the loader even when response is quick
+            const response = await axios.post(`${protocol}://${domain}:${port}${endpoint}`, formProps);
+            this.setState({ loading: false });
             this.props.predictionStore!.setPredictions(response.data);
         } catch (error) {
+            this.setState({ loading: false });
             console.log(error);
+        }
+    }
+
+    getDisplayStyle = (element: string): string => {
+        switch (element) {
+            case "loader":
+                if (this.state.loading) {
+                    return "block";
+                } else {
+                    return "none";
+                }
+            case "results":
+                if (this.props.predictionStore!.show) {
+                    return "block";
+                } else {
+                    return "none";
+                }
+            default:
+                return "none";
         }
     }
 
     emojiResult = (): JSX.Element[] => {
         let resultList: Array<JSX.Element> = [];
-        if (this.props.predictionStore!.initialized) {
+        if (this.props.predictionStore!.show) {
             const preds = this.props.predictionStore!.predictions;
-            const predsList: Array<EmojiProbPair> = 
-                    [preds.first!, preds.second!, preds.third!, preds.fourth!, preds.fifth!];
+            const predsList: Array<EmojiProbPair> =
+                [preds.first!, preds.second!, preds.third!, preds.fourth!, preds.fifth!];
             predsList.forEach(item => {
                 const emojiStr = String.fromCodePoint(parseInt(item.hexcode, 16));
                 resultList.push(
-                    <li key={item.hexcode + item.probability} className="list-group-item">
+                    <td>
                         <div className="container">
-                            <h3>{`${emojiStr}`}</h3>
-                            <h3>{`${item.probability}`}</h3>
+                            <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
+                            <h3>{`${item.probability * 100}%`}</h3>
                         </div>
-                    </li>
+                    </td>
                 )
             });
         }
@@ -59,7 +99,7 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
     render() {
         return (
             <div className="container">
-                <div className="container card">
+                <div className="container card" style={{ padding: "20pt 10pt" }}>
                     <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => this.handleSubmit(e)}>
                         <h3>문장을 입력하세요.</h3>
                         <div className="form-group">
@@ -75,11 +115,21 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
                         <button className="btn btn-primary" type="submit">제출</button>
                     </form>
                 </div>
-                <div className="container card">
+                <div style={{ display: this.getDisplayStyle("loader") }}>
+                    <Loader type="Hearts" width={130} height={130} color="#D873CE" />
+                </div>
+                <div className="container card" style={{
+                    display: this.getDisplayStyle("results"),
+                    marginTop: "20pt"
+                }}>
                     <h3>결과</h3>
-                    <ul>
-                        {this.emojiResult()}
-                    </ul>
+                    <table className="table table-sm table-borderless col-6">
+                        <tbody>
+                            <tr>
+                                {this.emojiResult()}
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         );
