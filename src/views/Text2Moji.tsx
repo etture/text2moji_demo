@@ -68,6 +68,7 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
             this.props.predictionStore!.setPredictions(response.data);
         } catch (error) {
             this.setState({ loading: false });
+            // TODO show there was error
             console.log(error);
         }
     }
