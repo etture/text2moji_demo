@@ -112,7 +112,7 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
                                 <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
                             </td>
                             <td>
-                                <h3>{`${item.probability * 100}%`}</h3>
+                                <h3>{`${Math.round(item.probability * 100) / 100}%`}</h3>
                             </td>
                         </tr>
                     );
