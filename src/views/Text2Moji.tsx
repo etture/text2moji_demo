@@ -106,13 +106,14 @@ class Text2Moji extends Component<IText2MojiProps, IText2MojiState> {
             if (isMobile) {
                 predsList.forEach(item => {
                     const emojiStr = String.fromCodePoint(parseInt(item.hexcode, 16));
+                    const prob = (item.probability * 100).toFixed(2);
                     resultList.push(
                         <tr key={emojiStr}>
                             <td>
                                 <h3 style={{ textAlign: "center" }}>{`${emojiStr}`}</h3>
                             </td>
                             <td>
-                                <h3>{`${(item.probability * 100).toFixed(2)}%`}</h3>
+                                <h3>{`${prob}%`}</h3>
                             </td>
                         </tr>
                     );
